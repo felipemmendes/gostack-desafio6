@@ -21,7 +21,7 @@ class ImportTransactionsService {
 
     const parsers = csvParse({
       from_line: 2,
-      delimiter: ', ',
+      ltrim: true,
     });
 
     const parseCSV = csvReadStream.pipe(parsers);
