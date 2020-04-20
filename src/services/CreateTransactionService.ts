@@ -1,9 +1,10 @@
-import { getCustomRepository } from 'typeorm';
+import { getCustomRepository, getRepository } from 'typeorm';
 
 import AppError from '../errors/AppError';
 import Transaction from '../models/Transaction';
 import TransactionsRepository from '../repositories/TransactionsRepository';
 import CreateCategoryService from './CreateCategoryService';
+import Category from '../models/Category';
 
 interface Request {
   title: string;
@@ -20,16 +21,24 @@ class CreateTransactionService {
     category,
   }: Request): Promise<Transaction> {
     const transactionsRepository = getCustomRepository(TransactionsRepository);
+    const categoriesRepository = getRepository(Category);
 
-    const checkCategory = new CreateCategoryService();
-    const checkCategoryResponse = await checkCategory.execute({ category });
+    let transactionCategory = await categoriesRepository.findOne({
+      where: { title: category },
+    });
 
-    const { category_id } = checkCategoryResponse;
+    if (!transactionCategory) {
+      transactionCategory = categoriesRepository.create({
+        title: category,
+      });
+
+      await categoriesRepository.save(transactionCategory);
+    }
 
     if (type === 'outcome') {
-      const balance = await transactionsRepository.getBalance();
+      const { total } = await transactionsRepository.getBalance();
 
-      if (value > balance.total) {
+      if (value > total) {
         throw new AppError('Insuficient funds', 400);
       }
     }
@@ -38,7 +47,7 @@ class CreateTransactionService {
       title,
       type,
       value,
-      category_id,
+      category: transactionCategory,
     });
 
     await transactionsRepository.save(transaction);
@@ -48,48 +57,3 @@ class CreateTransactionService {
 }
 
 export default CreateTransactionService;
-
-// import { getCustomRepository } from 'typeorm';
-
-// import AppError from '../errors/AppError';
-// import Transaction from '../models/Transaction';
-// import TransactionsRepository from '../repositories/TransactionsRepository';
-
-// interface Request {
-//   title: string;
-//   type: 'income' | 'outcome';
-//   value: number;
-//   category_id: string;
-// }
-
-// class CreateTransactionService {
-//   public async execute({
-//     title,
-//     type,
-//     value,
-//     category_id,
-//   }: Request): Promise<Transaction> {
-//     const transactionsRepository = getCustomRepository(TransactionsRepository);
-
-//     if (type === 'outcome') {
-//       const balance = await transactionsRepository.getBalance();
-
-//       if (value > balance.total) {
-//         throw new AppError('Insuficient funds', 400);
-//       }
-//     }
-
-//     const transaction = transactionsRepository.create({
-//       title,
-//       type,
-//       value,
-//       category_id,
-//     });
-
-//     await transactionsRepository.save(transaction);
-
-//     return transaction;
-//   }
-// }
-
-// export default CreateTransactionService;

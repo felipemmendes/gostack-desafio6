@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import { getCustomRepository } from 'typeorm';
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
 
 import uploadConfig from '../config/upload';
 
@@ -35,23 +33,6 @@ transactionsRouter.post('/', async (request, response) => {
   });
 
   return response.json(transaction);
-
-  // const { title, value, type, category } = request.body;
-
-  // const checkCategory = new CreateCategoryService();
-  // const checkCategoryResponse = await checkCategory.execute({ category });
-
-  // const { category_id } = checkCategoryResponse;
-
-  // const createTransaction = new CreateTransactionService();
-  // const transaction = await createTransaction.execute({
-  //   title,
-  //   type,
-  //   value,
-  //   category_id,
-  // });
-
-  // return response.json(transaction);
 });
 
 transactionsRouter.delete('/:id', async (request, response) => {
@@ -70,13 +51,7 @@ transactionsRouter.post(
   async (request, response) => {
     const importTransaction = new ImportTransactionsService();
 
-    const csvPath = path.join(uploadConfig.directory, request.file.filename);
-
-    const transactions = await importTransaction.execute({
-      csvReadStream: fs.createReadStream(csvPath),
-    });
-
-    await fs.promises.unlink(csvPath);
+    const transactions = await importTransaction.execute(request.file.path);
 
     return response.json(transactions);
   },
