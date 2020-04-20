@@ -3,7 +3,6 @@ import { getCustomRepository, getRepository } from 'typeorm';
 import AppError from '../errors/AppError';
 import Transaction from '../models/Transaction';
 import TransactionsRepository from '../repositories/TransactionsRepository';
-import CreateCategoryService from './CreateCategoryService';
 import Category from '../models/Category';
 
 interface Request {
